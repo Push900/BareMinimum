@@ -1,4 +1,5 @@
 
+
 const app = document.getElementById("app");
 const toastArea = document.getElementById("toastArea");
 
@@ -13,39 +14,77 @@ const state = {
   exploreFilter: "all"
 };
 
+
+function icon(name, cls="ui-icon") {
+  const paths = {
+    leaf: '<path d="M20 4C11 4 5 8 4 20c12-1 16-7 16-16Z"/><path d="M4 20 15 9"/>',
+    activity: '<path d="M3 12h4l2-7 4 14 2-7h6"/>',
+    phone: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
+    stress: '<circle cx="12" cy="12" r="9"/><path d="M8 14c1.2 1.3 2.5 2 4 2s2.8-.7 4-2M9 9h.01M15 9h.01"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="m15 9 5-5M16 4h4v4"/>',
+    people: '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c.5-4 2.5-6 6-6s5.5 2 6 6M14 15c3-.8 5 .8 5.5 5"/>',
+    book: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5Z"/><path d="M4 5.5v16M8 7h8M8 11h8"/>',
+    cart: '<path d="M3 4h2l2 11h10l3-8H6"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/>',
+    food: '<path d="M6 3v8M3 3v5a3 3 0 0 0 6 0V3M6 11v10M15 3v18M15 3c3 1 4 4 4 7h-4"/>',
+    globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+    recycle: '<path d="m7 7-2-3-3 5 3 5h4"/><path d="m17 7 2-3 3 5-3 5h-4"/><path d="m9 18 3 3 3-5-3-5"/><path d="M7 7h7M17 17H7"/>',
+    water: '<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11Z"/>',
+    walk: '<circle cx="13" cy="4" r="2"/><path d="m12 7-2 5 4 3 2 6M10 12l-4 4M13 10l4 1 2 4"/>',
+    plate: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M4 4v5M2 4v3a2 2 0 0 0 4 0V4M4 9v11M20 4v16"/>',
+    pencil: '<path d="m4 20 4.5-1L19 8.5 15.5 5 5 15.5 4 20Z"/><path d="m14 6 4 4"/>',
+    moon: '<path d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z"/>',
+    ban: '<circle cx="12" cy="12" r="9"/><path d="m6 6 12 12"/>',
+    trophy: '<path d="M7 4h10v5a5 5 0 0 1-10 0V4ZM12 14v5M8 21h8M5 5H3v2a4 4 0 0 0 4 4M19 5h2v2a4 4 0 0 1-4 4"/>',
+    home: '<path d="m3 11 9-8 9 8v9H3Z"/><path d="M9 20v-6h6v6"/>',
+    clipboard: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2h6v2M8 9h8M8 13h8M8 17h5"/>',
+    bolt: '<path d="m13 2-9 12h7l-1 8 9-12h-7l1-8Z"/>',
+    map: '<path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z"/><path d="M9 3v15M15 6v15"/>',
+    chart: '<path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/>',
+    compass: '<circle cx="12" cy="12" r="9"/><path d="m15 9-2 4-4 2 2-4 4-2Z"/>',
+    check: '<path d="m5 12 4 4L19 6"/>',
+    star: '<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/>',
+    swirl: '<path d="M5 7c2-3 8-3 10 0 2 3-1 6-4 6-3 0-5 2-3 5 2 2 7 1 9-2"/>',
+    dumbbell: '<path d="M6 9v6M3 10v4M9 7v10M15 7v10M21 10v4M18 9v6M9 12h6"/>',
+    briefcase: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5h8v2M3 12h18M10 12v2h4v-2"/>',
+    heart: '<path d="M20 8c0 5-8 10-8 10S4 13 4 8a4 4 0 0 1 7-2 4 4 0 0 1 7 2Z"/>'
+  };
+  return `<svg class="${cls}" style="width:1em;height:1em;display:inline-block;vertical-align:-.14em;flex:0 0 auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]||paths.star}</svg>`;
+}
+
 const questions = [
-  ["wellbeing","🌿","How often do you get 7+ hours of sleep?",["Rarely","Sometimes","Most nights","Every night"]],
-  ["wellbeing","🏃","How much do you move your body in a week?",["Barely at all","1-2 times","3-4 times","Daily"]],
-  ["wellbeing","📱","How's your relationship with screens?",["Always on","Hard to put down","Mostly mindful","Very intentional"]],
-  ["wellbeing","🧘","How do you manage stress?",["Barely manage","Sometimes cope","Have some tools","Got this handled"]],
-  ["work","⏰","How often do you actually disconnect after work?",["Never","Rarely","Usually","Always"]],
-  ["work","🎯","Do you feel like your work has meaning?",["Not really","Sometimes","Mostly yes","Absolutely"]],
-  ["work","🤝","How are your workplace relationships?",["Tough","Okay","Pretty good","Great"]],
-  ["work","📚","Do you make time to learn new things?",["Never","Rarely","Sometimes","Regularly"]],
-  ["consumption","🛒","How intentional are your purchases?",["Impulse buyer","Sometimes impulsive","Usually thoughtful","Very intentional"]],
-  ["consumption","🍽️","How plant-forward is your diet?",["Mostly meat","Some balance","Mostly plants","Plant-based"]],
-  ["consumption","🌍","How often do you think about your environmental impact?",["Not often","Occasionally","Regularly","It's a priority"]],
-  ["consumption","♻️","How much do you reduce, reuse, recycle?",["Barely","A little","Quite a bit","Obsessively"]]
+  ["wellbeing",icon("leaf"),"How often do you get 7+ hours of sleep?",["Rarely","Sometimes","Most nights","Every night"]],
+  ["wellbeing",icon("activity"),"How much do you move your body in a week?",["Barely at all","1-2 times","3-4 times","Daily"]],
+  ["wellbeing",icon("phone"),"How's your relationship with screens?",["Always on","Hard to put down","Mostly mindful","Very intentional"]],
+  ["wellbeing",icon("stress"),"How do you manage stress?",["Barely manage","Sometimes cope","Have some tools","Got this handled"]],
+  ["work",icon("clock"),"How often do you actually disconnect after work?",["Never","Rarely","Usually","Always"]],
+  ["work",icon("target"),"Do you feel like your work has meaning?",["Not really","Sometimes","Mostly yes","Absolutely"]],
+  ["work",icon("people"),"How are your workplace relationships?",["Tough","Okay","Pretty good","Great"]],
+  ["work",icon("book"),"Do you make time to learn new things?",["Never","Rarely","Sometimes","Regularly"]],
+  ["consumption",icon("cart"),"How intentional are your purchases?",["Impulse buyer","Sometimes impulsive","Usually thoughtful","Very intentional"]],
+  ["consumption",icon("food"),"How plant-forward is your diet?",["Mostly meat","Some balance","Mostly plants","Plant-based"]],
+  ["consumption",icon("globe"),"How often do you think about your environmental impact?",["Not often","Occasionally","Regularly","It's a priority"]],
+  ["consumption",icon("recycle"),"How much do you reduce, reuse, recycle?",["Barely","A little","Quite a bit","Obsessively"]]
 ];
 
 const challenges = {
   daily: [
-    ["💧","Drink 8 cups of water","Hydration = energy. No excuses.",10,342,"wellbeing"],
-    ["🚶","10-min walk, no headphones","Just you and the world.",15,218,"wellbeing"],
-    ["📵","Phone-free breakfast","Eat. Just eat.",20,156,"wellbeing"],
-    ["🌿","One plant-based meal","Swap one thing. That's it.",15,289,"consumption"],
-    ["✍️","3 things you're grateful for","Write it down. It compounds.",10,405,"wellbeing"]
+    [icon("water"),"Drink 8 cups of water","Hydration = energy. No excuses.",10,342,"wellbeing"],
+    [icon("walk"),"10-min walk, no headphones","Just you and the world.",15,218,"wellbeing"],
+    [icon("phone"),"Phone-free breakfast","Eat. Just eat.",20,156,"wellbeing"],
+    [icon("leaf"),"One plant-based meal","Swap one thing. That's it.",15,289,"consumption"],
+    [icon("pencil"),"3 things you're grateful for","Write it down. It compounds.",10,405,"wellbeing"]
   ],
   "7day": [
-    ["🛌","7 days of 7hrs sleep","Build the habit that builds everything else.",100,89,"wellbeing"],
-    ["🥗","No ultra-processed food week","Real ingredients only.",120,67,"consumption"],
-    ["🚫","Social media morning detox","No socials until 11am for 7 days.",80,134,"wellbeing"],
-    ["🌍","Zero single-use plastic week","Bring your own. Always.",150,52,"consumption"]
+    [icon("moon"),"7 days of 7hrs sleep","Build the habit that builds everything else.",100,89,"wellbeing"],
+    [icon("plate"),"No ultra-processed food week","Real ingredients only.",120,67,"consumption"],
+    [icon("ban"),"Social media morning detox","No socials until 11am for 7 days.",80,134,"wellbeing"],
+    [icon("globe"),"Zero single-use plastic week","Bring your own. Always.",150,52,"consumption"]
   ],
   monthly: [
-    ["🏃","30-day movement streak","Move every single day. Shape that counts.",500,31,"wellbeing"],
-    ["♻️","Carbon-conscious month","Track and reduce your impact systematically.",600,18,"consumption"],
-    ["🎯","Learn one new skill","One hour a day. 30 days. Something new.",400,45,"work"]
+    [icon("activity"),"30-day movement streak","Move every single day. Shape that counts.",500,31,"wellbeing"],
+    [icon("recycle"),"Carbon-conscious month","Track and reduce your impact systematically.",600,18,"consumption"],
+    [icon("target"),"Learn one new skill","One hour a day. 30 days. Something new.",400,45,"work"]
   ]
 };
 
@@ -96,7 +135,7 @@ function topNav() {
 
 function bottomNav() {
   const items = [
-    ["home","🏠","Home"],["dashboard","📋","Today"],["challenges","⚡","Challenges"],["explore","🗺️","Explore"],["impact","📈","Impact"]
+    ["home",icon("home"),"Home"],["dashboard",icon("clipboard"),"Today"],["challenges",icon("bolt"),"Challenges"],["explore",icon("map"),"Explore"],["impact",icon("chart"),"Impact"]
   ];
   return `<div class="bottom-nav">
     <div class="bottom-nav-inner d-flex justify-content-around">
@@ -123,23 +162,20 @@ function home() {
             <div class="col-lg-5">
               <p class="text-muted-design fs-5">Small actions. Real impact. No guilt trips. Just your bare minimum — done consistently.</p>
               <button class="btn btn-ink rounded-4 p-4 mt-3 w-100 text-start btn-press" onclick="go('assessment')">
-                <div class="fs-1">⚡</div>
+                <div class="fs-1">${icon("bolt")}</div>
                 <div class="display-serif fs-2">Find your<br>bare minimum</div>
                 <div class="mono-label mt-2 opacity-75">3-min assessment →</div>
               </button>
             </div>
             <div class="col-lg-5 offset-lg-1">
               <div class="d-flex flex-wrap flex-lg-column gap-3">
-                <button class="btn bg-lime rounded-4 p-3 text-start card-hover" onclick="go('explore')">🌿 <span class="display-serif fs-5">Well-being</span></button>
-                <button class="btn bg-blue text-white rounded-4 p-3 text-start card-hover" onclick="go('explore')">💼 <span class="display-serif fs-5">Work</span></button>
-                <button class="btn bg-orange text-white rounded-4 p-3 text-start card-hover" onclick="go('explore')">♻️ <span class="display-serif fs-5">Consumption</span></button>
+                <button class="btn bg-lime rounded-4 p-3 text-start card-hover" onclick="go('explore')">${icon("leaf")} <span class="display-serif fs-5">Well-being</span></button>
+                <button class="btn bg-blue text-start card-hover" onclick="go('explore')">${icon("briefcase")} <span class="display-serif fs-5">Work</span></button>
+                <button class="btn bg-orange text-start card-hover" onclick="go('explore')">${icon("recycle")} <span class="display-serif fs-5">Consumption</span></button>
               </div>
             </div>
           </div>
-          <div class="row border-top mt-5 pt-4 g-4 fade-up">
-            ${[["3 min","to assess your lifestyle"],["12k+","people taking action"],["94%","feel less overwhelmed"]].map(x=>`
-              <div class="col-4"><div class="stat-number">${x[0]}</div><div class="mono-label text-muted-design mt-1">${x[1]}</div></div>`).join("")}
-          </div>
+          
         </div>
       </section>
 
@@ -149,9 +185,9 @@ function home() {
             <div class="mono-label text-lime mb-4" style="color:var(--lime)">How it works</div>
             <div class="row g-4">
               ${[
-                ["01","🧭","Assess","Answer 12 quick questions about your lifestyle. No judgment."],
-                ["02","📊","Understand","Get your score across Well-being, Work, and Consumption."],
-                ["03","⚡","Act","Pick 1-3 tiny actions from your personalized bare minimum."]
+                ["01",icon("compass"),"Assess","Answer 12 quick questions about your lifestyle. No judgment."],
+                ["02",icon("chart"),"Understand","Get your score across Well-being, Work, and Consumption."],
+                ["03",icon("bolt"),"Act","Pick 1-3 tiny actions from your personalized bare minimum."]
               ].map(s=>`
                 <div class="col-md-4">
                   <div class="h-100 p-4 rounded-4 border border-secondary-subtle">
@@ -257,11 +293,11 @@ function ring(score,color,size=150,stroke=12) {
 
 function score() {
   const overall=overallScore();
-  const level=overall>=80?"🌟 Thriving":overall>=60?"🌱 Growing":overall>=40?"🌀 Starting":"💪 Room to grow";
+  const level=overall>=80?`${icon("star")} Thriving`:overall>=60?`${icon("leaf")} Growing`:overall>=40?`${icon("swirl")} Starting`:`${icon("dumbbell")} Room to grow`;
   const cats=[
-    ["wellbeing","🌿","Well-being",varColor("wellbeing"),"Your sleep and movement habits are a solid foundation. Small consistency wins here."],
-    ["work","💼","Work",varColor("work"),"Your boundaries between work and life could use some love. Start with one log-off time."],
-    ["consumption","♻️","Consumption",varColor("consumption"),"Small swaps in your daily habits can compound into something big over time."]
+    ["wellbeing",icon("leaf"),"Well-being",varColor("wellbeing"),"Your sleep and movement habits are a solid foundation. Small consistency wins here."],
+    ["work",icon("briefcase"),"Work",varColor("work"),"Your boundaries between work and life could use some love. Start with one log-off time."],
+    ["consumption",icon("recycle"),"Consumption",varColor("consumption"),"Small swaps in your daily habits can compound into something big over time."]
   ];
   return `<div class="page section-dark">
     <div class="container px-4 px-md-5 py-4">
@@ -311,9 +347,9 @@ function varColor(cat) {
 
 function dashboard() {
   const tasks=[
-    ["💧","Drink 8 cups of water","wellbeing",10],
-    ["🚶","Take a 10-minute walk","wellbeing",15],
-    ["📵","Phone-free breakfast","wellbeing",20]
+    [icon("water"),"Drink 8 cups of water","wellbeing",10],
+    [icon("walk"),"Take a 10-minute walk","wellbeing",15],
+    [icon("phone"),"Phone-free breakfast","wellbeing",20]
   ];
   const days=["M","T","W","T","F","S","S"], streak=[1,1,1,0,1,1,0];
   return `<div class="page">
@@ -367,9 +403,9 @@ function dashboard() {
 
         <div class="row g-3 mt-3">
           ${[
-            ["Challenges","⚡","challenges","bg-blue"],
-            ["Explore","🗺️","explore","bg-orange"],
-            ["Impact","📈","impact","bg-lime"]
+            ["Challenges",icon("bolt"),"challenges","bg-blue"],
+            ["Explore",icon("map"),"explore","bg-orange"],
+            ["Impact",icon("chart"),"impact","bg-lime"]
           ].map(x=>`<div class="col-md-4"><button class="btn ${x[3]} w-100 rounded-4 p-4 text-start card-hover" onclick="go('${x[2]}')"><span class="fs-2">${x[1]}</span><div class="display-serif fs-4 mt-2">${x[0]} →</div></button></div>`).join("")}
         </div>
       </div>
@@ -445,7 +481,7 @@ function explore() {
         <p class="text-muted-design" style="max-width:450px">Guides and articles curated for your lifestyle — no fluff, just what works.</p>
 
         <div class="d-flex flex-wrap gap-2 my-4">
-          ${[["all","All","var(--ink)"],["wellbeing","🌿 Well-being","var(--lime)"],["work","💼 Work","var(--blue)"],["consumption","♻️ Consumption","var(--orange)"]].map(f=>`
+          ${[["all","All","var(--ink)"],["wellbeing",icon("leaf")+" Well-being","var(--lime)"],["work",icon("briefcase")+" Work","var(--blue)"],["consumption",icon("recycle")+" Consumption","var(--orange)"]].map(f=>`
             <button class="btn btn-sm rounded-pill ${state.exploreFilter===f[0]?"text-white":"text-dark"}" style="background:${state.exploreFilter===f[0]?f[2]:"var(--paper)"};border:1px solid var(--border)" onclick="state.exploreFilter='${f[0]}';render()">${f[1]}</button>`).join("")}
         </div>
 
@@ -477,7 +513,7 @@ function impact() {
   const avg=overallScore();
   const weekly=[40,55,45,70,60,80,75], days=["M","T","W","T","F","S","S"];
   const stats=[[""+7,"Days active","var(--lime)","var(--ink)"],[avg,"Avg score","var(--ink)","var(--lime)"],["47","Tasks done","var(--paper)","var(--orange)"],["5","Day streak","var(--paper)","var(--blue)"]];
-  const sdgs=[[3,"Good Health","❤️","var(--lime)"],[8,"Decent Work","💼","var(--blue)"],[12,"Responsible Consumption","♻️","var(--orange)"],[13,"Climate Action","🌍","var(--lime)"]];
+  const sdgs=[[3,"Good Health",icon("heart"),"var(--lime)"],[8,"Decent Work",icon("briefcase"),"var(--blue)"],[12,"Responsible Consumption",icon("recycle"),"var(--orange)"],[13,"Climate Action",icon("globe"),"var(--lime)"]];
   return `<div class="page">
     <div class="container px-4 px-md-5 py-4">
       <div class="max-width">
@@ -498,9 +534,9 @@ function impact() {
         <div class="bg-ink text-light rounded-4 p-4 mt-4">
           <div class="mono-label text-secondary mb-4">Progress by category</div>
           ${[
-            ["🌿","Well-being",state.scores.wellbeing,"var(--lime)"],
-            ["💼","Work",state.scores.work,"var(--blue)"],
-            ["♻️","Consumption",state.scores.consumption,"var(--orange)"]
+            [icon("leaf"),"Well-being",state.scores.wellbeing,"var(--lime)"],
+            [icon("briefcase"),"Work",state.scores.work,"var(--blue)"],
+            [icon("recycle"),"Consumption",state.scores.consumption,"var(--orange)"]
           ].map(x=>`<div class="mb-4">
             <div class="d-flex justify-content-between mb-2"><span class="display-serif fs-5">${x[0]} ${x[1]}</span><strong style="color:${x[3]}">${x[2]}</strong></div>
             <div class="progress-design" style="background:#2a2a28"><div style="width:${x[2]}%;background:${x[3]}"></div></div>
@@ -528,3 +564,4 @@ function render() {
 }
 
 render();
+
