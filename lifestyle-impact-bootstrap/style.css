@@ -191,7 +191,8 @@ button { font: inherit; }
   box-shadow: 0 15px 35px rgba(28,28,26,.22);
 }
 
-.bottom-nav button {
+.bottom-nav button,
+.bottom-nav a {
   border: 0;
   background: transparent;
   color: var(--muted);
@@ -200,7 +201,8 @@ button { font: inherit; }
   padding: .55rem .7rem;
 }
 
-.bottom-nav button.active {
+.bottom-nav button.active,
+.bottom-nav a.active {
   background: var(--lime);
   color: var(--ink);
 }
@@ -355,6 +357,6 @@ button { font: inherit; }
 
 @media (max-width: 767px) {
   .hero-title { font-size: clamp(4rem, 20vw, 6.5rem); }
-  .bottom-nav button { min-width: 56px; padding-inline: .3rem; }
+  .bottom-nav button, .bottom-nav a { min-width: 56px; padding-inline: .3rem; }
   .bottom-nav .nav-text { font-size: .48rem; }
 }

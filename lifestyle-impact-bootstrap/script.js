@@ -3,9 +3,9 @@
 const app = document.getElementById("app");
 const toastArea = document.getElementById("toastArea");
 
+const savedScores = JSON.parse(localStorage.getItem("bareMinimumScores") || "null");
 const state = {
-  screen: "home",
-  scores: { wellbeing: 62, work: 48, consumption: 71 },
+  scores: savedScores || { wellbeing: 62, work: 48, consumption: 71 },
   completedChallenges: new Set(),
   assessmentIndex: 0,
   assessmentAnswers: {},
@@ -99,10 +99,8 @@ const articles = [
   ["consumption","7 min","Plant-based for beginners (no lectures)","A practical starting point without the guilt."]
 ];
 
-function go(screen) {
-  state.screen = screen;
-  render();
-  window.scrollTo({top:0, behavior:"smooth"});
+function go(page) {
+  window.location.href = page === "home" ? "index.html" : `${page}.html`;
 }
 
 function toast(message) {
@@ -124,9 +122,9 @@ function topNav() {
       <div class="d-flex align-items-center justify-content-between">
         ${logo()}
         <div class="d-none d-md-flex gap-4 mono-label text-muted-design">
-          <button class="btn btn-link p-0 text-muted-design text-decoration-none" onclick="go('explore')">Explore</button>
-          <button class="btn btn-link p-0 text-muted-design text-decoration-none" onclick="go('challenges')">Challenges</button>
-          <button class="btn btn-link p-0 text-muted-design text-decoration-none" onclick="go('impact')">Impact</button>
+          <a class="btn btn-link p-0 text-muted-design text-decoration-none" href="explore.html">Explore</a>
+          <a class="btn btn-link p-0 text-muted-design text-decoration-none" href="challenges.html">Challenges</a>
+          <a class="btn btn-link p-0 text-muted-design text-decoration-none" href="impact.html">Impact</a>
         </div>
         <button class="btn btn-ink btn-round px-4 py-2 mono-label btn-press" onclick="go('assessment')">Start →</button>
       </div>
@@ -134,15 +132,16 @@ function topNav() {
 }
 
 function bottomNav() {
+  const currentPage = document.body.dataset.page || "home";
   const items = [
     ["home",icon("home"),"Home"],["dashboard",icon("clipboard"),"Today"],["challenges",icon("bolt"),"Challenges"],["explore",icon("map"),"Explore"],["impact",icon("chart"),"Impact"]
   ];
   return `<div class="bottom-nav">
     <div class="bottom-nav-inner d-flex justify-content-around">
       ${items.map(([id,icon,label]) => `
-        <button class="${state.screen===id ? "active" : ""}" onclick="go('${id}')">
+        <a class="${currentPage===id ? "active" : ""}" href="${id === "home" ? "index.html" : `${id}.html`}">
           <span class="nav-icon">${icon}</span><span class="nav-text">${label}</span>
-        </button>`).join("")}
+        </a>`).join("")}
     </div>
   </div>`;
 }
@@ -250,7 +249,7 @@ function assessment() {
   </div>`;
 }
 
-function selectAnswer(i) { state.assessmentSelected=i; render(); }
+function selectAnswer(i) { state.assessmentSelected=i; refreshCurrentPage(); }
 
 function nextAssessment() {
   if (state.assessmentSelected===null) return;
@@ -259,7 +258,7 @@ function nextAssessment() {
   if (state.assessmentIndex < questions.length-1) {
     state.assessmentIndex++;
     state.assessmentSelected = state.assessmentAnswers[state.assessmentIndex] ?? null;
-    render();
+    refreshCurrentPage();
     return;
   }
   ["wellbeing","work","consumption"].forEach(cat=>{
@@ -267,6 +266,7 @@ function nextAssessment() {
     const total = ids.reduce((sum,i)=>sum+(state.assessmentAnswers[i]||0),0);
     state.scores[cat] = Math.round(total/(ids.length*4)*100);
   });
+  localStorage.setItem("bareMinimumScores", JSON.stringify(state.scores));
   state.assessmentIndex=0;
   state.assessmentAnswers={};
   state.assessmentSelected=null;
@@ -277,7 +277,7 @@ function assessmentBack() {
   if (state.assessmentIndex===0) { go("home"); return; }
   state.assessmentIndex--;
   state.assessmentSelected = state.assessmentAnswers[state.assessmentIndex] ?? null;
-  render();
+  refreshCurrentPage();
 }
 
 function ring(score,color,size=150,stroke=12) {
@@ -418,7 +418,7 @@ function toggleToday(i) {
   const key="today"+i;
   state.completedChallenges.has(key)?state.completedChallenges.delete(key):state.completedChallenges.add(key);
   toast(state.completedChallenges.has(key)?"ACTION COMPLETED":"ACTION UNCHECKED");
-  render();
+  refreshCurrentPage();
 }
 
 function challengesPage() {
@@ -439,7 +439,7 @@ function challengesPage() {
 
         <div class="btn-group w-100 mb-4">
           ${[["daily","Daily"],["7day","7-Day"],["monthly","Monthly"]].map(t=>`
-            <button class="btn ${state.challengeTab===t[0]?"btn-ink":"btn-outline-soft"}" onclick="state.challengeTab='${t[0]}';render()">${t[1]}</button>`).join("")}
+            <button class="btn ${state.challengeTab===t[0]?"btn-ink":"btn-outline-soft"}" onclick="state.challengeTab='${t[0]}';refreshCurrentPage()">${t[1]}</button>`).join("")}
         </div>
 
         <div class="row g-4">
@@ -468,7 +468,7 @@ function toggleChallenge(key) {
   if(state.completedChallenges.has(key)) state.completedChallenges.delete(key);
   else state.completedChallenges.add(key);
   toast(state.completedChallenges.has(key)?"CHALLENGE COMPLETED +POINTS":"CHALLENGE UNCHECKED");
-  render();
+  refreshCurrentPage();
 }
 
 function explore() {
@@ -482,7 +482,7 @@ function explore() {
 
         <div class="d-flex flex-wrap gap-2 my-4">
           ${[["all","All","var(--ink)"],["wellbeing",icon("leaf")+" Well-being","var(--lime)"],["work",icon("briefcase")+" Work","var(--blue)"],["consumption",icon("recycle")+" Consumption","var(--orange)"]].map(f=>`
-            <button class="btn btn-sm rounded-pill ${state.exploreFilter===f[0]?"text-white":"text-dark"}" style="background:${state.exploreFilter===f[0]?f[2]:"var(--paper)"};border:1px solid var(--border)" onclick="state.exploreFilter='${f[0]}';render()">${f[1]}</button>`).join("")}
+            <button class="btn btn-sm rounded-pill ${state.exploreFilter===f[0]?"text-white":"text-dark"}" style="background:${state.exploreFilter===f[0]?f[2]:"var(--paper)"};border:1px solid var(--border)" onclick="state.exploreFilter='${f[0]}';refreshCurrentPage()">${f[1]}</button>`).join("")}
         </div>
 
         <div class="article-feature p-4 p-md-5 mb-4">
@@ -558,10 +558,13 @@ function impact() {
   </div>`;
 }
 
-function render() {
-  const screens={home,assessment,score,dashboard,challenges:challengesPage,explore,impact};
-  app.innerHTML=`<div class="screen-enter">${screens[state.screen]()}</div>`;
+function refreshCurrentPage() {
+  const page = document.body.dataset.page || "home";
+  const pageTemplates = { home, assessment, score, dashboard, challenges: challengesPage, explore, impact };
+  const template = pageTemplates[page];
+  if (!template) throw new Error(`Unknown page: ${page}`);
+  app.innerHTML = `<div class="screen-enter">${template()}</div>`;
 }
 
-render();
+refreshCurrentPage();
 
