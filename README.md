@@ -1,48 +1,14 @@
-# Lifestyle Impact App — Bootstrap Frontend
+# BareMinimum
 
-This is a frontend-only recreation of the Figma "Lifestyle Impact App Design".
+React / Express / tRPC / Drizzle starter, adapted from the Sandbox web-db-user template.
 
-## Technology
+- `pnpm dev`: development server; honors `PORT` (default 3000).
+- `pnpm build` / `pnpm start`: build and serve `dist/index.js` and `dist/public/`.
+- `pnpm db:migrate`: apply checked-in migrations. `pnpm db:push`: generate and apply new schema changes.
+- `pnpm check` / `pnpm test`: types and application tests.
 
-- HTML
-- CSS
-- JavaScript
-- Bootstrap 5.3
+Start with the Webdev skill's default-template guide. Platform login, storage, payments and service contracts live in its shared references; read the relevant capability before extending its helper.
 
-No React, Tailwind, backend, database, or other UI framework is required.
+`server/_core/publicConfig.ts` exposes only named public runtime values. Private keys stay server-side. The platform serves managed `/manus-storage/` assets; the application does not register a second proxy.
 
-## Run
-
-You can simply open `index.html` in a browser.
-
-For a local development server, any simple static server will work.
-
-## Main screens
-
-- Home
-- 12-question Assessment
-- Score
-- Today's Dashboard
-- Challenges: Daily / 7-Day / Monthly
-- Explore with category filters
-- Impact dashboard
-
-The assessment, challenge completion, navigation, score calculations, filters, progress bars and simple toast messages are handled with plain JavaScript.
-
-## Design tokens
-
-Main colors:
-
-- Cream: #F4EFE4
-- Ink: #1C1C1A
-- Lime: #C5F135
-- Orange: #FF6B35
-- Blue: #7B9DC8
-- Paper: #FFFDF7
-- Border: #D4CCBA
-
-Fonts:
-
-- Fraunces — display headings
-- Outfit — body text
-- Space Mono — labels and metadata
+Platform configuration is readable and editable through `webdev.config`. Default settings are initial values, not enforced constraints. The agent may modify the files, commands and configuration or follow the flexible guide for another stack.
