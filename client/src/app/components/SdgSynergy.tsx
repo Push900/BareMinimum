@@ -22,7 +22,7 @@ export function SdgSynergy({ metrics, onDetails }: SdgSynergyProps) {
         </div>
         <button className="icon-button" aria-label="Open SDG impact details" onClick={onDetails}><ArrowUpRight size={16} /></button>
       </div>
-      <p className="card-description">Today’s habits are building a healthier rhythm across three goals.</p>
+      <p className="card-description">Health tracking is self-reported. Work and consumption tiles are sample data until connected to real sources.</p>
       <div className="synergy-list">
         {metrics.map((metric) => (
           <div className="synergy-row" key={metric.key}>
@@ -35,7 +35,7 @@ export function SdgSynergy({ metrics, onDetails }: SdgSynergyProps) {
           </div>
         ))}
       </div>
-      <div className="synergy-note"><span className="pulse-dot" /> Updating from your recent signals</div>
+      <div className="synergy-note"><span className="pulse-dot" /> Open details to record your health baseline and review sources</div>
     </section>
   );
 }

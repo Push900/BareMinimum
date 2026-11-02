@@ -6,6 +6,7 @@ import type { Request } from "express";
 import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
+import { getLocalSession } from "./localAuth";
 import { ENV } from "./env";
 import type {
   ExchangeTokenRequest,
@@ -259,6 +260,10 @@ class SDKServer {
   async authenticateRequest(req: Request): Promise<AuthenticatedUser> {
     // 1. Prefer the session cookie (regular OAuth login).
     const cookies = this.parseCookies(req.headers.cookie);
+    if (process.env.NODE_ENV === "development") {
+      const localUser = getLocalSession(cookies.get("bareminimum_local_session"));
+      if (localUser) return localUser as AuthenticatedUser;
+    }
     let sessionToken = cookies.get(COOKIE_NAME);
     if (!sessionToken && req.path.startsWith("/api/scheduled/")) {
       const ticket = cookies.get("app_session_id");

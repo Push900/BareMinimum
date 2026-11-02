@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { ArrowRight, Heart, Leaf, Search, ShieldCheck, Sparkles, Target } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { DashboardSnapshot } from "../models/dashboard";
+import { HealthTracker } from "./HealthTracker";
 
 export type DashboardDialog = "team" | "help" | "settings" | "notifications" | "quick-find" | "signal" | "community" | "privacy" | "sdg" | "integrations";
 
@@ -78,7 +79,7 @@ export function DashboardActionDialog({ action, snapshot, boundary, quietMode, s
             <div className="action-dialog__stat-row"><div><strong>{snapshot.summary.deepWork}</strong><span>deep work</span></div><div><strong>{snapshot.summary.streak} days</strong><span>steady streak</span></div><div><strong>{snapshot.summary.carbonSaved}</strong><span>carbon avoided</span></div></div>
             <button className="action-dialog__primary" onClick={() => goTo("My rhythm", "rhythm")}><Target size={15} /> Review your boundary</button>
           </>}
-          {action === "sdg" && <div className="action-dialog__sdgs">{snapshot.metrics.map((metric) => <div key={metric.key}><span className={`action-sdg-icon action-sdg-icon--${metric.accent}`}>{metric.key === "health" ? <Heart size={16} /> : metric.key === "work" ? <Target size={16} /> : <Leaf size={16} />}</span><span><strong>{metric.goal} · {metric.label}</strong><small>{metric.value} {metric.detail}</small></span><b>{metric.progress}%</b></div>)}</div>}
+          {action === "sdg" && <><div className="action-dialog__sdgs">{snapshot.metrics.map((metric) => <div key={metric.key}><span className={`action-sdg-icon action-sdg-icon--${metric.accent}`}>{metric.key === "health" ? <Heart size={16} /> : metric.key === "work" ? <Target size={16} /> : <Leaf size={16} />}</span><span><strong>{metric.goal} · {metric.label}</strong><small>{metric.value} {metric.detail}</small></span><b>{metric.progress}%</b></div>)}</div><HealthTracker /></>}
           {action === "privacy" && <div className="action-dialog__privacy"><ShieldCheck size={20} /><p>The dashboard sends your snapshot to this app server for MongoDB storage. If storage is offline, this browser keeps a local preview copy. Provider OAuth tokens are not collected by this demo.</p></div>}
           {action === "integrations" && <div className="action-dialog__integrations"><div className="action-dialog__feed">{snapshot.profile.integrations.map((item) => <p key={item.id}><span className={`action-dot action-dot--${item.tone === "gold" ? "gold" : item.status === "connected" ? "mint" : "blue"}`} /> {item.label}<small>{item.status === "connected" ? "Sample connection" : "Not connected"}</small></p>)}</div><p className="action-dialog__hint">Live OAuth syncing requires provider application credentials and redirect URLs. This preview does not claim to connect accounts or store provider tokens.</p></div>}
         </div>

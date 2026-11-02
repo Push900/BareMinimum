@@ -15,6 +15,24 @@ function isDashboardSnapshot(value: unknown): value is DashboardSnapshot {
   );
 }
 
+function clarifySampleData(snapshot: DashboardSnapshot): DashboardSnapshot {
+  return {
+    ...snapshot,
+    metrics: snapshot.metrics.map(metric => ({
+      ...metric,
+      value: "Sample",
+      detail: metric.key === "health" ? "log your sleep to track it" : "not connected to a real data source",
+      progress: 0,
+    })),
+    activities: snapshot.activities.map(item => ({
+      ...item,
+      title: item.title.startsWith("Sample:") ? item.title : `Sample: ${item.title}`,
+      time: "Example",
+    })),
+    summary: { ...snapshot.summary, impactScore: 0, impactDelta: "Sample", deepWork: "Sample", deepWorkDelta: "Sample", carbonSaved: "Sample", carbonDelta: "Sample", streak: 0 },
+  };
+}
+
 /**
  * Frontend-only repository seam. Replace these functions with API calls once
  * MongoDB collections and authentication are connected; UI components do not
@@ -27,14 +45,14 @@ export function getDashboardSnapshot(): DashboardSnapshot {
     const cached = window.localStorage.getItem(DASHBOARD_CACHE_KEY);
     if (cached) {
       const parsed: unknown = JSON.parse(cached);
-      if (isDashboardSnapshot(parsed)) return parsed;
+      if (isDashboardSnapshot(parsed)) return clarifySampleData(parsed);
       window.localStorage.removeItem(DASHBOARD_CACHE_KEY);
     }
   } catch {
     // Keep the first-run experience usable if storage is unavailable.
   }
 
-  return dashboardSnapshot;
+  return clarifySampleData(dashboardSnapshot);
 }
 
 export function saveDashboardSnapshot(snapshot: DashboardSnapshot): void {

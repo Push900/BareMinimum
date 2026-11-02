@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import { parse as parseCookieHeader } from "cookie";
 import { createServer } from "http";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
@@ -7,7 +8,12 @@ import { publicPlatformScript } from "./publicConfig";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { getDashboard, saveDashboard } from "../mongo";
+import { getDashboard, getHealthRecord, saveDashboard, saveHealthRecord, listHealthcareRecords, insertHealthcareRecord, updateHealthcareRecord, type HealthRecord } from "../mongo";
+import { sdk } from "./sdk";
+import { clearLocalSession, loginLocalAccount, registerLocalAccount } from "./localAuth";
+import { randomUUID } from "node:crypto";
+import { datasets, type DatasetKey, type HealthcareRecord } from "../../client/src/app/models/healthcare";
+import { validateHealthcareValues } from "../healthcareValidation";
 
 async function startServer() {
   const app = express();
@@ -16,22 +22,123 @@ async function startServer() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
-  app.get("/api/dashboard", async (_req, res) => {
+  app.post("/api/auth/local/signup", async (req, res) => {
     try {
-      res.json({ snapshot: await getDashboard() });
+      const session = await registerLocalAccount(req.body?.email, req.body?.name, req.body?.password);
+      res.cookie("bareminimum_local_session", session.token, { httpOnly: true, sameSite: "lax", secure: req.secure, path: "/", maxAge: session.maxAge });
+      res.status(201).json({ user: { name: session.user.name, email: session.user.email } });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not create account";
+      res.status(message.includes("Mongo") || message.includes("MONGODB") ? 503 : 400).json({ error: message });
+    }
+  });
+  app.post("/api/auth/local/login", async (req, res) => {
+    try {
+      const session = await loginLocalAccount(req.body?.email, req.body?.password);
+      res.cookie("bareminimum_local_session", session.token, { httpOnly: true, sameSite: "lax", secure: req.secure, path: "/", maxAge: session.maxAge });
+      res.json({ user: { name: session.user.name, email: session.user.email } });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not sign in";
+      res.status(message.includes("Mongo") || message.includes("MONGODB") ? 503 : 401).json({ error: message });
+    }
+  });
+  app.post("/api/auth/local/logout", (req, res) => {
+    const token = parseCookieHeader(req.headers.cookie ?? "").bareminimum_local_session;
+    clearLocalSession(token);
+    res.clearCookie("bareminimum_local_session", { httpOnly: true, sameSite: "lax", secure: req.secure, path: "/" });
+    res.json({ success: true });
+  });
+  app.get("/api/dashboard", async (req, res) => {
+    let user;
+    try {
+      user = await sdk.authenticateRequest(req);
+    } catch { return res.status(401).json({ error: "Sign in required" }); }
+    try {
+      res.json({ snapshot: await getDashboard(user.openId) });
     } catch (error) {
       console.error("[MongoDB] Dashboard read failed:", error);
       res.status(503).json({ error: "Dashboard storage is unavailable" });
     }
   });
   app.put("/api/dashboard", async (req, res) => {
+    let user;
     try {
-      await saveDashboard(req.body?.snapshot);
+      user = await sdk.authenticateRequest(req);
+    } catch { return res.status(401).json({ error: "Sign in required" }); }
+    try {
+      await saveDashboard(user.openId, req.body?.snapshot);
       res.json({ success: true });
     } catch (error) {
       console.error("[MongoDB] Dashboard save failed:", error);
       res.status(503).json({ error: "Dashboard storage is unavailable" });
     }
+  });
+  app.get("/api/health-record", async (req, res) => {
+    try {
+      const user = await sdk.authenticateRequest(req);
+      res.json({ record: await getHealthRecord(user.openId) });
+    } catch {
+      res.status(401).json({ error: "Sign in required" });
+    }
+  });
+  app.put("/api/health-record", async (req, res) => {
+    try {
+      const user = await sdk.authenticateRequest(req);
+      const value = req.body?.record as Partial<HealthRecord> | undefined;
+      if (!value || ![value.sleepHours, value.moderateMinutes, value.vigorousMinutes, value.strengthDays].every(Number.isFinite)
+        || value.sleepHours! < 0 || value.sleepHours! > 24 || value.moderateMinutes! < 0 || value.moderateMinutes! > 1000
+        || value.vigorousMinutes! < 0 || value.vigorousMinutes! > 1000 || value.strengthDays! < 0 || value.strengthDays! > 7) {
+        return res.status(400).json({ error: "Invalid health record" });
+      }
+      const record: HealthRecord = {
+        sleepHours: value.sleepHours!, moderateMinutes: value.moderateMinutes!,
+        vigorousMinutes: value.vigorousMinutes!, strengthDays: value.strengthDays!,
+        recordedAt: new Date().toISOString(), source: "self_report",
+        references: ["https://www.cdc.gov/sleep/about/", "https://www.who.int/initiatives/behealthy/physical-activity/"],
+      };
+      await saveHealthRecord(user.openId, record);
+      res.json({ success: true });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      res.status(message.includes("MONGODB") || message.includes("Mongo") ? 503 : 401)
+        .json({ error: "Could not save health record" });
+    }
+  });
+  app.get("/api/healthcare-records", async (req, res) => {
+    let user;
+    try { user = await sdk.authenticateRequest(req); }
+    catch { return res.status(401).json({ error: "Sign in required" }); }
+    const dataset = typeof req.query.dataset === "string" ? req.query.dataset : undefined;
+    if (dataset && !datasets.some((item) => item.key === dataset)) return res.status(400).json({ error: "Unknown dataset" });
+    try {
+      res.json({ records: await listHealthcareRecords(user.openId, dataset as DatasetKey | undefined) });
+    } catch { res.status(503).json({ error: "Healthcare record storage is unavailable" }); }
+  });
+  app.post("/api/healthcare-records", async (req, res) => {
+    let user;
+    try { user = await sdk.authenticateRequest(req); }
+    catch { return res.status(401).json({ error: "Sign in required" }); }
+    const dataset = req.body?.dataset as DatasetKey;
+    if (!datasets.some((item) => item.key === dataset) || !validateHealthcareValues(dataset, req.body?.values)) {
+      return res.status(400).json({ error: "Enter valid values within the ranges shown for this dataset" });
+    }
+    const record: HealthcareRecord = { id: randomUUID(), dataset, values: req.body.values, recordedAt: new Date().toISOString(), source: "self_report" };
+    try { await insertHealthcareRecord(user.openId, record); res.status(201).json({ record }); }
+    catch { res.status(503).json({ error: "Healthcare record storage is unavailable" }); }
+  });
+  app.put("/api/healthcare-records/:id", async (req, res) => {
+    let user;
+    try { user = await sdk.authenticateRequest(req); }
+    catch { return res.status(401).json({ error: "Sign in required" }); }
+    const dataset = req.body?.dataset as DatasetKey;
+    if (!datasets.some((item) => item.key === dataset) || !validateHealthcareValues(dataset, req.body?.values)) {
+      return res.status(400).json({ error: "Enter valid values within the ranges shown for this dataset" });
+    }
+    try {
+      const updated = await updateHealthcareRecord(user.openId, req.params.id, dataset, req.body.values);
+      if (!updated) return res.status(404).json({ error: "Record not found" });
+      res.json({ success: true });
+    } catch { res.status(503).json({ error: "Healthcare record storage is unavailable" }); }
   });
   app.get("/api/platform/config.js", (_req, res) => {
     res.set("Cache-Control", "no-store").type("application/javascript").send(publicPlatformScript());

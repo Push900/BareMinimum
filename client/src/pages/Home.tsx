@@ -28,14 +28,17 @@ import { DemoStack } from "../app/components/DemoStack";
 import { DashboardActionDialog, type DashboardDialog } from "../app/components/DashboardActionDialog";
 import { ProfileCard } from "../app/components/ProfileCard";
 import { SdgSynergy } from "../app/components/SdgSynergy";
+import { HealthcareWorkspace } from "../app/components/HealthcareWorkspace";
 import { getDashboardSnapshot, saveDashboardSnapshot } from "../app/lib/dashboardStore";
 import type { DashboardSnapshot } from "../app/models/dashboard";
+import { Link } from "wouter";
 
 const navItems = [
   { label: "Overview", icon: HomeIcon, target: "overview" },
-  { label: "My rhythm", icon: TrendingUp, target: "rhythm" },
-  { label: "Impact log", icon: Target, target: "impact-log" },
-  { label: "Integrations", icon: LayoutGrid, target: "integrations" },
+  { label: "Health & wellness", icon: TrendingUp, target: "personal-wellness" },
+  { label: "Worker well-being", icon: Target, target: "worker-wellbeing" },
+  { label: "Healthcare sustainability", icon: LayoutGrid, target: "healthcare-sustainability" },
+  { label: "Trends / reports", icon: Target, target: "trends-reports" },
 ];
 
 const quickActions = [
@@ -68,32 +71,13 @@ export default function Home() {
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true);
 
   useEffect(() => {
-    let active = true;
-    fetch("/api/dashboard").then((response) => {
-      if (!response.ok) throw new Error("MongoDB is unavailable");
-      return response.json();
-    }).then((result: { snapshot?: DashboardSnapshot | null }) => {
-      if (active && result.snapshot) setSnapshot(result.snapshot);
-      if (active) setSyncStatus(result.snapshot ? "synced" : "saving");
-    }).catch(() => {
-      // The browser cache keeps the prototype usable when MongoDB is offline.
-      if (active) setSyncStatus("local");
-    }).finally(() => {
-      if (active) setStorageReady(true);
-    });
-    return () => { active = false; };
+    setSyncStatus("local");
+    setStorageReady(true);
   }, []);
 
   useEffect(() => {
     if (!storageReady) return;
     saveDashboardSnapshot(snapshot);
-    setSyncStatus("saving");
-    fetch("/api/dashboard", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ snapshot }),
-    }).then((response) => setSyncStatus(response.ok ? "synced" : "local"))
-      .catch(() => setSyncStatus("local"));
   }, [snapshot, storageReady]);
 
   useEffect(() => {
@@ -181,6 +165,7 @@ export default function Home() {
           <div className="top-bar__left"><button className="mobile-menu-button" onClick={() => setSidebarOpen(true)} aria-label="Open navigation" aria-expanded={sidebarOpen} aria-controls="primary-navigation"><Menu size={19} /></button><div className="breadcrumb"><span>Workspace</span><ChevronDown size={13} /><strong>Overview</strong></div></div>
           <div className="top-bar__right">
             <div className="sync-pill" role="status"><span className="sync-pill__dot" /> {syncStatus === "synced" ? "MongoDB synced" : syncStatus === "saving" ? "Saving changes" : syncStatus === "local" ? "Local preview" : "Connecting"}</div>
+            <div className="account-links"><Link href="/login">Sign in</Link><Link href="/signup">Create account</Link></div>
             <button className="top-icon-button" aria-label="Open notifications" onClick={() => setDialog("notifications")}><Bell size={17} />{hasUnreadNotifications && <span className="notification-dot" />}</button>
             <ProfileCard profile={snapshot.profile} open={profileOpen} onToggle={() => setProfileOpen(!profileOpen)} screenReaderEnabled={screenReaderEnabled} onScreenReaderToggle={() => { setScreenReaderEnabled(!screenReaderEnabled); announce(`Screen reader support ${!screenReaderEnabled ? "on" : "off"}`); }} quietMode={quietMode} onQuietModeToggle={() => { setQuietMode(!quietMode); announce(`Quiet motion ${!quietMode ? "on" : "off"}`); }} onManageIntegrations={() => setDialog("integrations")} />
           </div>
@@ -196,16 +181,18 @@ export default function Home() {
             <div className="intro-actions"><button className="secondary-button" onClick={() => setDialog("quick-find")}><Command size={15} /> <span>Quick find</span><kbd>⌘ K</kbd></button><button className="primary-button" onClick={() => handleQuickAction("One good thing")}><Plus size={16} /> One good thing</button></div>
           </div>
 
+          <p className="sample-preview-note"><strong>Sample dashboard preview.</strong> Tiles below are illustrative only; they are not personal measurements or SDG scores. Your dated records and calculated indicators appear in Healthcare wellness &amp; sustainability.</p>
+
           <div className="dashboard-grid">
             <section id="overview" className="hero-card card-surface">
               <div className="hero-card__noise" aria-hidden="true" />
-              <div className="hero-card__topline"><span className="live-tag"><i /> LIVE SIGNAL</span><span className="hero-card__time">08:42 <span>local time</span></span></div>
+              <div className="hero-card__topline"><span className="live-tag"><i /> SAMPLE PREVIEW</span><span className="hero-card__time">DEMO <span>not live data</span></span></div>
               <div className="hero-card__main">
-                <div className="hero-card__copy"><p className="eyebrow eyebrow--mint">YOUR DAILY SIGNAL</p><h2>Good rhythm,<br /><span>not perfect rhythm.</span></h2><p>You've kept your energy in the green while moving the work that matters forward.</p><button className="text-button" onClick={() => setDialog("signal")}>See your signal <ArrowUpRight size={15} /></button></div>
-                <div className="impact-orbit" aria-label={`Impact score ${snapshot.summary.impactScore} out of 100`}><div className="impact-orbit__ring"><span>{snapshot.summary.impactScore}</span><small>impact<br />score</small></div><span className="orbit-dot orbit-dot--one" /><span className="orbit-dot orbit-dot--two" /></div>
+                <div className="hero-card__copy"><p className="eyebrow eyebrow--mint">DEMO DASHBOARD</p><h2>A clear view<br /><span>of what matters.</span></h2><p>Illustrative sample values show the layout. Add your own dated entries below to see personal status and history.</p><button className="text-button" onClick={() => navigateTo("Health & wellness", "personal-wellness")}>Add a wellness entry <ArrowUpRight size={15} /></button></div>
+                <div className="impact-orbit" aria-label="Sample preview only"><div className="impact-orbit__ring"><span>—</span><small>no score<br />calculated</small></div><span className="orbit-dot orbit-dot--one" /><span className="orbit-dot orbit-dot--two" /></div>
               </div>
-              <div className="hero-card__stats"><div><span>Streak</span><strong>{snapshot.summary.streak} <small>days</small></strong><em>+1 this week</em></div><div><span>Deep work</span><strong>{snapshot.summary.deepWork}</strong><em>{snapshot.summary.deepWorkDelta} vs avg</em></div><div><span>Carbon avoided</span><strong>{snapshot.summary.carbonSaved}</strong><em>{snapshot.summary.carbonDelta} this week</em></div></div>
-              <div className="hero-card__bottom"><span><span className="mini-avatars"><i>JR</i><i>NK</i><i>+8</i></span> Your circle is in rhythm too</span><button className="icon-button icon-button--light" aria-label="Open community signals" onClick={() => setDialog("community")}><ArrowUpRight size={15} /></button></div>
+              <div className="hero-card__stats"><div><span>Streak · sample</span><strong>—</strong><em>Not tracked</em></div><div><span>Work hours · sample</span><strong>—</strong><em>Not connected</em></div><div><span>Waste · sample</span><strong>—</strong><em>Not connected</em></div></div>
+              <div className="hero-card__bottom"><span>Private dated records are shown in the sections below.</span><button className="icon-button icon-button--light" aria-label="Open data and privacy details" onClick={() => setDialog("privacy")}><ArrowUpRight size={15} /></button></div>
             </section>
 
             <SdgSynergy metrics={snapshot.metrics} onDetails={() => setDialog("sdg")} />
@@ -219,6 +206,8 @@ export default function Home() {
               <div className="quick-card__note"><MessageCircle size={14} /> {lastAction}</div>
             </section>
           </div>
+
+          <HealthcareWorkspace />
 
           <footer className="content-footer"><div className="footer-status"><span className="system-dot" /> Your data stays yours <span className="footer-divider" /> {syncStatus === "synced" ? "MongoDB sync" : "Local preview"} <span className="footer-divider" /> <button onClick={() => setDialog("privacy")}>Privacy</button></div><div className="footer-links"><span>Made for better days</span><span className="footer-mark">✳</span></div></footer>
         </div>
