@@ -7,6 +7,7 @@ import { publicPlatformScript } from "./publicConfig";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { getDashboard, saveDashboard } from "../mongo";
 
 async function startServer() {
   const app = express();
@@ -15,6 +16,23 @@ async function startServer() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
+  app.get("/api/dashboard", async (_req, res) => {
+    try {
+      res.json({ snapshot: await getDashboard() });
+    } catch (error) {
+      console.error("[MongoDB] Dashboard read failed:", error);
+      res.status(503).json({ error: "Dashboard storage is unavailable" });
+    }
+  });
+  app.put("/api/dashboard", async (req, res) => {
+    try {
+      await saveDashboard(req.body?.snapshot);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[MongoDB] Dashboard save failed:", error);
+      res.status(503).json({ error: "Dashboard storage is unavailable" });
+    }
+  });
   app.get("/api/platform/config.js", (_req, res) => {
     res.set("Cache-Control", "no-store").type("application/javascript").send(publicPlatformScript());
   });

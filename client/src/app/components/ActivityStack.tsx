@@ -14,7 +14,7 @@ export function ActivityStack({ activities, activeIndex, onIndexChange, onComple
   const visible = useMemo(() => [0, 1, 2].map((offset) => activities[(activeIndex + offset) % activities.length]), [activities, activeIndex]);
 
   return (
-    <section className="activity-card card-surface" aria-labelledby="activity-title">
+    <section id="impact-log" className="activity-card card-surface" aria-labelledby="activity-title">
       <div className="card-heading-row">
         <div>
           <p className="eyebrow eyebrow--mint">ACTIVITY STACK</p>

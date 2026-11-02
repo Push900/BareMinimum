@@ -14,6 +14,7 @@ import {
   Volume2,
 } from "lucide-react";
 import type { BareMinimumProfile } from "../models/dashboard";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface ProfileCardProps {
   profile: BareMinimumProfile;
@@ -23,6 +24,7 @@ interface ProfileCardProps {
   onScreenReaderToggle: () => void;
   quietMode: boolean;
   onQuietModeToggle: () => void;
+  onManageIntegrations: () => void;
 }
 
 const integrationIcon = (id: string) => {
@@ -39,7 +41,9 @@ export function ProfileCard({
   onScreenReaderToggle,
   quietMode,
   onQuietModeToggle,
+  onManageIntegrations,
 }: ProfileCardProps) {
+  const { theme, toggleTheme } = useTheme();
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const hasMounted = useRef(false);
@@ -114,7 +118,7 @@ export function ProfileCard({
         <div className="profile-focus"><Sparkles size={14} /> Focus: <strong>{profile.focusArea}</strong></div>
 
         <div className="profile-section">
-          <div className="profile-section__label"><span>Connected spaces</span><button className="link-button"><Link2 size={13} /> Manage</button></div>
+          <div className="profile-section__label"><span>Connected spaces</span><button className="link-button" onClick={onManageIntegrations}><Link2 size={13} /> Manage</button></div>
           <div className="integration-list">
             {profile.integrations.map((integration) => (
               <div className="integration-row" key={integration.id}>
@@ -141,8 +145,8 @@ export function ProfileCard({
         </div>
 
         <div className="profile-panel__footer">
-          <button className="ghost-icon-button" aria-label="Switch to light theme"><SunMedium size={15} /></button>
-          <span>Theme adapts to your workday</span>
+          <button className="ghost-icon-button" aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`} onClick={toggleTheme} aria-pressed={theme === "light"}>{theme === "dark" ? <SunMedium size={15} /> : <Moon size={15} />}</button>
+          <span>{theme === "dark" ? "Dark theme" : "Light theme"} · saved on this device</span>
           <Volume2 size={14} className="profile-panel__footer-icon" />
         </div>
       </div>

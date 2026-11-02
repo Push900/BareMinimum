@@ -1,14 +1,18 @@
 # BareMinimum
 
-React / Express / tRPC / Drizzle starter, adapted from the Sandbox web-db-user template.
+BareMinimum is a React wellness dashboard for small, sustainable habits across UN Goals 3, 8, and 12. The app uses an Express server and MongoDB for dashboard snapshots, with a browser-local preview fallback when MongoDB is unavailable.
 
-- `pnpm dev`: development server; honors `PORT` (default 3000).
-- `pnpm build` / `pnpm start`: build and serve `dist/index.js` and `dist/public/`.
-- `pnpm db:migrate`: apply checked-in migrations. `pnpm db:push`: generate and apply new schema changes.
-- `pnpm check` / `pnpm test`: types and application tests.
+## Run locally
 
-Start with the Webdev skill's default-template guide. Platform login, storage, payments and service contracts live in its shared references; read the relevant capability before extending its helper.
+1. Install dependencies with `pnpm install`.
+2. Set `MONGODB_URI` and `MONGODB_DB_NAME` in `.env` (the default database is `bareminimum`).
+3. Start MongoDB, then run `pnpm dev`.
+4. Open `http://localhost:3000`. Set `PORT=3001` if port 3000 is already in use.
 
-`server/_core/publicConfig.ts` exposes only named public runtime values. Private keys stay server-side. The platform serves managed `/manus-storage/` assets; the application does not register a second proxy.
+The Express server exposes `GET /api/dashboard` and `PUT /api/dashboard`. Snapshots are saved in the `dashboardSnapshots` collection. `GET /api/health` reports whether the app server is running.
 
-Platform configuration is readable and editable through `webdev.config`. Default settings are initial values, not enforced constraints. The agent may modify the files, commands and configuration or follow the flexible guide for another stack.
+## Production
+
+- `pnpm build` builds the React client and Express server.
+- `pnpm start` serves the production build.
+- `pnpm check` runs TypeScript validation.

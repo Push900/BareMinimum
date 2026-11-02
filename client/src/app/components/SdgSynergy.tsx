@@ -3,6 +3,7 @@ import type { SdgMetric } from "../models/dashboard";
 
 interface SdgSynergyProps {
   metrics: SdgMetric[];
+  onDetails: () => void;
 }
 
 const metricIcon = (key: SdgMetric["key"]) => {
@@ -11,15 +12,15 @@ const metricIcon = (key: SdgMetric["key"]) => {
   return <Leaf size={15} />;
 };
 
-export function SdgSynergy({ metrics }: SdgSynergyProps) {
+export function SdgSynergy({ metrics, onDetails }: SdgSynergyProps) {
   return (
-    <section className="synergy-card card-surface" aria-labelledby="synergy-title">
+    <section id="impact" className="synergy-card card-surface" aria-labelledby="synergy-title">
       <div className="card-heading-row">
         <div>
           <p className="eyebrow eyebrow--gold">YOUR SYNERGY</p>
           <h2 id="synergy-title">Small signals. Shared impact.</h2>
         </div>
-        <button className="icon-button" aria-label="Open SDG impact details"><ArrowUpRight size={16} /></button>
+        <button className="icon-button" aria-label="Open SDG impact details" onClick={onDetails}><ArrowUpRight size={16} /></button>
       </div>
       <p className="card-description">Today’s habits are building a healthier rhythm across three goals.</p>
       <div className="synergy-list">

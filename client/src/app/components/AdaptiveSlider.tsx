@@ -14,7 +14,7 @@ export function AdaptiveSlider({ value, onChange }: AdaptiveSliderProps) {
   }, [value]);
 
   return (
-    <section className="boundary-card card-surface" aria-labelledby="boundary-title">
+    <section id="rhythm" className="boundary-card card-surface" aria-labelledby="boundary-title">
       <div className="card-heading-row">
         <div>
           <p className="eyebrow eyebrow--blue">WORK / GOAL 8</p>
