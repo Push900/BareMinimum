@@ -14,7 +14,7 @@ export const appRouter = router({
       const cookieOptions = getSessionCookieOptions(ctx.req);
       const token = parseCookieHeader(ctx.req.headers.cookie ?? "")[COOKIE_NAME];
       await clearLocalSession(token);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      ctx.res.clearCookie(COOKIE_NAME, cookieOptions);
       return {
         success: true,
       } as const;

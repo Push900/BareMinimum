@@ -21,9 +21,10 @@ describe("healthcare record input validation", () => {
   });
 
   it("validates dated timetable tasks and task state", () => {
-    expect(validateHealthcareValues("timetable", { task: "Staff break", scheduledAt: "2026-11-03", durationMinutes: 30, completed: false })).toBe(true);
+    expect(validateHealthcareValues("timetable", { task: "Record shift duration — hours", scheduledAt: "2026-11-03", durationMinutes: 30, completed: false })).toBe(true);
     expect(validateHealthcareValues("timetable", { task: "", scheduledAt: "2026-11-03" })).toBe(false);
-    expect(validateHealthcareValues("timetable", { task: "Staff break", scheduledAt: "2026-02-30" })).toBe(false);
-    expect(validateHealthcareValues("timetable", { task: "Staff break", scheduledAt: "2026-11-03", completed: "yes" })).toBe(false);
+    expect(validateHealthcareValues("timetable", { task: "Staff break", scheduledAt: "2026-11-03" })).toBe(false);
+    expect(validateHealthcareValues("timetable", { task: "Record shift duration — hours", scheduledAt: "2026-02-30" })).toBe(false);
+    expect(validateHealthcareValues("timetable", { task: "Record shift duration — hours", scheduledAt: "2026-11-03", completed: "yes" })).toBe(false);
   });
 });

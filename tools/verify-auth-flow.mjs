@@ -138,11 +138,21 @@ try {
     cookie: cookieA,
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ dataset: "timetable", values: { task: "Flow test task", category: "wellbeing", scheduledAt: "2026-11-03", durationMinutes: 20, completed: false } }),
+    body: JSON.stringify({ dataset: "timetable", values: { task: "Record weight — kg", category: "SDG 3 measurement", scheduledAt: "2026-11-03", durationMinutes: 5, completed: false } }),
   });
-  assert(taskResponse.status === 201, `Timetable task creation failed with HTTP ${taskResponse.status}: ${await taskResponse.text()}`);
+  if (taskResponse.status !== 201) throw new Error(`Timetable task creation failed with HTTP ${taskResponse.status}: ${await taskResponse.text()}`);
   const created = await taskResponse.json();
   createdRecordId = created.record.id;
+
+  const bodyResponse = await request("/api/healthcare-records", {
+    cookie: cookieA,
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ dataset: "body", values: { heightCm: 170, weightKg: 68, waistCm: 80 } }),
+  });
+  if (bodyResponse.status !== 201) throw new Error(`Body measurement save failed with HTTP ${bodyResponse.status}: ${await bodyResponse.text()}`);
+  const bodyRecord = (await bodyResponse.json()).record;
+  assert(bodyRecord.values.weightKg === 68 && bodyRecord.dataset === "body", "The body measurement did not save with its account owner and value.");
 
   const validSnapshot = {
     profile: { name: accounts[0].name, screenReaderEnabled: true, quietMode: false },
@@ -159,7 +169,9 @@ try {
   server = startServer();
   await waitForServer(server);
   const afterRestart = await request("/api/healthcare-records", { cookie: cookieA });
-  assert((await afterRestart.json()).records.some(record => record.id === createdRecordId), "The session or record did not persist across a server restart.");
+  const persistedRecords = (await afterRestart.json()).records;
+  assert(persistedRecords.some(record => record.id === createdRecordId && record.values.task === "Record weight — kg"), "The timetable task did not persist across a server restart.");
+  assert(persistedRecords.some(record => record.dataset === "body" && record.values.weightKg === 68), "The body measurement did not persist across a server restart.");
   const dashboardAfterRestart = await request("/api/dashboard", { cookie: cookieA });
   assert((await dashboardAfterRestart.json()).snapshot?.profile?.name === accounts[0].name, "The dashboard snapshot did not persist across a server restart.");
 
@@ -189,13 +201,13 @@ try {
     cookie: cookieB,
     method: "PUT",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ dataset: "timetable", values: { task: "Unauthorized edit", scheduledAt: "2026-11-03", completed: true } }),
+    body: JSON.stringify({ dataset: "timetable", values: { task: "Record weight — kg", scheduledAt: "2026-11-03", completed: true } }),
   });
   assert(crossUserUpdate.status === 404, `Cross-account update returned HTTP ${crossUserUpdate.status}, expected 404.`);
   const crossUserDelete = await request(`/api/healthcare-records/${createdRecordId}`, { cookie: cookieB, method: "DELETE" });
   assert(crossUserDelete.status === 404, `Cross-account delete returned HTTP ${crossUserDelete.status}, expected 404.`);
 
-  console.log("Auth flow passed: sign-up, sign-in, MongoDB reads/writes, server-restart session persistence, logout, 401 protection, timetable persistence, and two-account isolation.");
+  console.log("Auth flow passed: sign-up, sign-in, dated body measurement and concrete timetable task saves, MongoDB reads/writes, server-restart persistence, logout, 401 protection, and two-account isolation.");
 } finally {
   await stopServer(server);
   await cleanTestData();

@@ -595,6 +595,45 @@ kbd { padding: 3px 5px; color: var(--text-faint); border: 1px solid var(--border
 .landing-preview>p { margin:16px 0 0; color:var(--text-muted); font-size:10px; line-height:1.6; }
 .landing-features { max-width:1120px; margin:0 auto; padding:30px 0 58px; display:grid; grid-template-columns:repeat(3,1fr); gap:35px; border-top:1px solid var(--border); }
 .landing-features>div>span { color:var(--mint); font:10px "DM Mono",monospace; }
+.landing-guide { max-width:1120px; margin:0 auto; padding:66px 0 72px; border-top:1px solid var(--border); }
+.landing-section-heading { max-width:680px; margin-bottom:30px; }
+.landing-section-heading h2 { margin:15px 0 10px; font:600 clamp(30px,4vw,46px)/1.1 "Space Grotesk",sans-serif; letter-spacing:-.04em; }
+.landing-section-heading h2 em { color:var(--mint); font-style:normal; }
+.landing-section-heading>p:last-child { color:var(--text-muted); line-height:1.7; }
+.landing-area-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:15px; }
+.landing-area { padding:22px; border:1px solid var(--border); border-radius:15px; background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.015)); }
+.landing-area__top { display:flex; align-items:center; justify-content:space-between; color:var(--mint); font:10px "DM Mono",monospace; }
+.landing-area__icon { display:grid; width:36px; height:36px; place-items:center; border-radius:10px; background:rgba(115,231,179,.1); }
+.landing-area h3 { margin:19px 0 10px; font:500 17px "Space Grotesk",sans-serif; }
+.landing-area p { margin:0; color:var(--text-muted); font-size:11px; line-height:1.8; }
+.landing-step-number { color:var(--mint); font:9px "DM Mono",monospace; }
+.landing-preview__rows .landing-step-number { margin-right:1px; }
+.metric-card-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:18px 0; }
+.metric-card-grid h3 { grid-column:1/-1; margin:12px 0 2px; color:var(--text-soft); font:600 14px "Space Grotesk",sans-serif; }
+.metric-card { display:grid; gap:6px; min-width:0; padding:13px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,.025); }
+.metric-card>small { color:var(--text-faint); font-size:9px; line-height:1.5; }
+.metric-card>strong { color:var(--text-soft); font-size:11px; }
+.metric-card>b { color:var(--mint); font:500 15px "DM Mono",monospace; overflow-wrap:anywhere; }
+.metric-card>b span { color:var(--text-muted); font-size:10px; }
+.metric-card--calculated { border-color:rgba(115,231,179,.2); }
+.metric-card .history-edit { justify-self:start; }
+.trend-field-select { display:flex; align-items:center; gap:10px; margin-top:14px; color:var(--text-muted); font-size:11px; }
+.trend-field-select select { max-width:min(100%,360px); min-height:36px; padding:0 10px; color:var(--text-main); border:1px solid var(--border-strong); border-radius:8px; background:var(--bg-surface-raised); }
+.trend-plot { margin:18px 0; padding:16px; border:1px solid var(--border); border-radius:12px; background:rgba(255,255,255,.025); }
+.trend-plot--empty { color:var(--text-muted); }
+.trend-plot--empty p,.trend-plot__hint,.trend-plot__foot { margin:7px 0 0; color:var(--text-faint); font-size:10px; line-height:1.6; }
+.trend-plot__heading { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.trend-plot__heading div { display:grid; gap:4px; }
+.trend-plot__heading strong { color:var(--text-soft); font:600 13px "Space Grotesk",sans-serif; }
+.trend-plot__heading span { color:var(--text-faint); font-size:9px; }
+.trend-plot__heading>b { color:var(--mint); font:500 15px "DM Mono",monospace; }
+.trend-plot svg { width:100%; height:auto; overflow:visible; margin-top:6px; }
+.trend-axis { stroke:var(--border-strong); stroke-width:1; }
+.trend-line { fill:none; stroke:var(--mint); stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+.trend-point { fill:var(--bg-surface); stroke:var(--mint); stroke-width:3; }
+.trend-label { fill:var(--text-faint); font:10px "DM Mono",monospace; }
+.trend-value { fill:var(--text-soft); font:10px "DM Mono",monospace; }
+@media(max-width:760px) { .landing-area-grid { grid-template-columns:1fr; } .metric-card-grid { grid-template-columns:1fr; } }
 .landing-features h2 { margin:11px 0 8px; font:500 17px "Space Grotesk",sans-serif; }
 .landing-features p { max-width:290px; margin:0; color:var(--text-muted); font-size:11px; line-height:1.7; }
 .landing-footer { min-height:63px; justify-content:space-between; gap:18px; border-top:1px solid var(--border); color:var(--text-muted); font:9px "DM Mono",monospace; }

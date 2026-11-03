@@ -23,10 +23,14 @@ export function validateHealthcareValues(dataset: DatasetKey, values: unknown): 
 
   const data = values as Record<string, number | string | boolean>;
   if (dataset === "timetable" && (typeof data.task !== "string" || !data.task.trim() || typeof data.scheduledAt !== "string")) return false;
+  if (dataset === "timetable" && !["Log water — ml/day", "Record sleep — hours/night", "Update moderate activity — minutes/week", "Record weight — kg", "Record waist — cm", "Log biomedical waste — kg/day", "Record waste segregation — correct/incorrect", "Record shift duration — hours", "Record overtime — hours", "Enter food discarded — kg/day"].includes(String(data.task))) return false;
+  if (dataset === "worker" && typeof data.trainingCompleted === "number" && typeof data.trainingAssigned === "number" && data.trainingCompleted > data.trainingAssigned) return false;
   if (dataset === "waste" && typeof data.totalKg === "number") {
-    for (const key of ["segregatedCorrectlyKg", "recoveredKg", "disposedKg"]) {
+    for (const key of ["recoveredKg"]) {
       if (typeof data[key] === "number" && data[key] > data.totalKg) return false;
     }
+    if (typeof data.correctSegregationChecks === "number" && typeof data.segregationChecks === "number" && data.correctSegregationChecks > data.segregationChecks) return false;
+    if (typeof data.completedTreatmentRecords === "number" && typeof data.treatmentRecords === "number" && data.completedTreatmentRecords > data.treatmentRecords) return false;
     const categories = ["sharpsKg", "infectiousKg", "pharmaceuticalKg", "chemicalKg", "generalKg"]
       .map((key) => data[key]).filter((value): value is number => typeof value === "number");
     if (categories.reduce((sum, value) => sum + value, 0) > data.totalKg) return false;
