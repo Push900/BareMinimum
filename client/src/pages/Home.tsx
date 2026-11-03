@@ -29,9 +29,10 @@ import { DashboardActionDialog, type DashboardDialog } from "../app/components/D
 import { ProfileCard } from "../app/components/ProfileCard";
 import { SdgSynergy } from "../app/components/SdgSynergy";
 import { HealthcareWorkspace } from "../app/components/HealthcareWorkspace";
-import { getDashboardSnapshot, saveDashboardSnapshot } from "../app/lib/dashboardStore";
 import type { DashboardSnapshot } from "../app/models/dashboard";
 import { Link } from "wouter";
+import { useAuth } from "../_core/hooks/useAuth";
+import { dashboardSnapshot } from "../app/models/dashboard";
 
 const navItems = [
   { label: "Overview", icon: HomeIcon, target: "overview" },
@@ -55,7 +56,8 @@ function getWeekNumber(date: Date) {
 }
 
 export default function Home() {
-  const [snapshot, setSnapshot] = useState<DashboardSnapshot>(() => getDashboardSnapshot());
+  const { user, logout } = useAuth();
+  const [snapshot, setSnapshot] = useState<DashboardSnapshot>(dashboardSnapshot);
   const [storageReady, setStorageReady] = useState(false);
   const [syncStatus, setSyncStatus] = useState<"connecting" | "saving" | "synced" | "local">("connecting");
   const [profileOpen, setProfileOpen] = useState(false);
@@ -69,16 +71,70 @@ export default function Home() {
   const [activeNav, setActiveNav] = useState("Overview");
   const [dialog, setDialog] = useState<DashboardDialog | null>(null);
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true);
+  const [snapshotTouched, setSnapshotTouched] = useState(false);
+  const accountName = user?.name || user?.email || "Account";
+  const accountInitials = accountName.split(/\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase();
 
   useEffect(() => {
-    setSyncStatus("local");
-    setStorageReady(true);
-  }, []);
+    setQuietMode(snapshot.profile.quietMode ?? false);
+    setScreenReaderEnabled(snapshot.profile.screenReaderEnabled);
+  }, [snapshot.profile.quietMode, snapshot.profile.screenReaderEnabled]);
+
+  const toggleQuietMode = () => {
+    const next = !quietMode;
+    setQuietMode(next);
+    setSnapshot(current => ({ ...current, profile: { ...current.profile, quietMode: next } }));
+    if (user) setSnapshotTouched(true);
+    announce(`Quiet motion ${next ? "on" : "off"}`);
+  };
+  const toggleScreenReader = () => {
+    const next = !screenReaderEnabled;
+    setScreenReaderEnabled(next);
+    setSnapshot(current => ({ ...current, profile: { ...current.profile, screenReaderEnabled: next } }));
+    if (user) setSnapshotTouched(true);
+    announce(`Screen reader support ${next ? "on" : "off"}`);
+  };
 
   useEffect(() => {
-    if (!storageReady) return;
-    saveDashboardSnapshot(snapshot);
-  }, [snapshot, storageReady]);
+    let active = true;
+    setStorageReady(false);
+    if (!user) {
+      setSyncStatus("local");
+      setStorageReady(true);
+      return () => { active = false; };
+    }
+    setSnapshot({ ...dashboardSnapshot, profile: { ...dashboardSnapshot.profile, id: user.openId, name: accountName, initials: accountInitials, integrations: [] }, activities: [] });
+    setSyncStatus("connecting");
+    fetch("/api/dashboard", { credentials: "include" }).then(async response => {
+      if (!response.ok) throw new Error("Could not load account dashboard");
+      const data = await response.json() as { snapshot: DashboardSnapshot | null };
+      if (!active) return;
+      if (data.snapshot) setSnapshot(data.snapshot);
+      setSyncStatus("synced");
+      setSnapshotTouched(false);
+      setStorageReady(true);
+    }).catch(() => {
+      if (!active) return;
+      setSyncStatus("local");
+      setStorageReady(true);
+    });
+    return () => { active = false; };
+  }, [user?.openId]);
+
+  useEffect(() => {
+    if (!storageReady || !snapshotTouched || !user) return;
+    setSyncStatus("saving");
+    const timer = window.setTimeout(() => {
+      fetch("/api/dashboard", { method: "PUT", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ snapshot }) })
+        .then(response => {
+          if (!response.ok) throw new Error("Dashboard sync failed");
+          setSyncStatus("synced");
+          setSnapshotTouched(false);
+        })
+        .catch(() => setSyncStatus("local"));
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [snapshot, snapshotTouched, storageReady, user?.openId]);
 
   useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
@@ -115,6 +171,7 @@ export default function Home() {
     if (!completed || completed.completed) return;
     const nextActivities = snapshot.activities.map((item) => item.id === activityId ? { ...item, completed: true } : item);
     setSnapshot({ ...snapshot, activities: nextActivities, metrics: updateMetricFor(completed.category), summary: { ...snapshot.summary, impactScore: snapshot.summary.impactScore + 2 } });
+    setSnapshotTouched(true);
     announce(`${completed.title} marked done. Your impact score is now ${snapshot.summary.impactScore + 2}.`);
   };
 
@@ -134,6 +191,7 @@ export default function Home() {
       completed: true,
     };
     setSnapshot({ ...snapshot, activities: [newActivity, ...snapshot.activities].slice(0, 6), metrics: updateMetricFor(category), summary: { ...snapshot.summary, impactScore: snapshot.summary.impactScore + 6 } });
+    setSnapshotTouched(true);
     setActiveActivity(0);
     announce(`${label} logged. Your ${categoryLabel.toLowerCase()} signal is stronger.`);
   };
@@ -154,7 +212,7 @@ export default function Home() {
         <button className="rail-link" onClick={() => setDialog("team")}><Users size={17} /><span>Team signals</span><span className="rail-link__badge">4</span></button>
         <button className="rail-link" onClick={() => setDialog("help")}><CircleHelp size={17} /><span>Help centre</span></button>
         <div className="rail-spacer" />
-        <div className="rail-tip"><span className="rail-tip__icon"><CloudSun size={16} /></span><div><strong>Good morning, Alex.</strong><span>Your energy is steady.</span></div></div>
+        <div className="rail-tip"><span className="rail-tip__icon"><CloudSun size={16} /></span><div><strong>{user ? `Welcome, ${accountName.split(" ")[0]}.` : "Good morning."}</strong><span>{user ? "Your account is signed in." : "Explore the sample preview."}</span></div></div>
         <button className="rail-link rail-link--muted" onClick={() => setDialog("settings")}><Settings2 size={17} /><span>Settings</span></button>
         <div className="rail-footer"><span className="system-dot" /> All systems calm <span>v1.0</span></div>
       </aside>
@@ -165,9 +223,9 @@ export default function Home() {
           <div className="top-bar__left"><button className="mobile-menu-button" onClick={() => setSidebarOpen(true)} aria-label="Open navigation" aria-expanded={sidebarOpen} aria-controls="primary-navigation"><Menu size={19} /></button><div className="breadcrumb"><span>Workspace</span><ChevronDown size={13} /><strong>Overview</strong></div></div>
           <div className="top-bar__right">
             <div className="sync-pill" role="status"><span className="sync-pill__dot" /> {syncStatus === "synced" ? "MongoDB synced" : syncStatus === "saving" ? "Saving changes" : syncStatus === "local" ? "Local preview" : "Connecting"}</div>
-            <div className="account-links"><Link href="/login">Sign in</Link><Link href="/signup">Create account</Link></div>
+            {!user && <div className="account-links"><Link href="/login">Sign in</Link><Link href="/signup">Create account</Link></div>}
             <button className="top-icon-button" aria-label="Open notifications" onClick={() => setDialog("notifications")}><Bell size={17} />{hasUnreadNotifications && <span className="notification-dot" />}</button>
-            <ProfileCard profile={snapshot.profile} open={profileOpen} onToggle={() => setProfileOpen(!profileOpen)} screenReaderEnabled={screenReaderEnabled} onScreenReaderToggle={() => { setScreenReaderEnabled(!screenReaderEnabled); announce(`Screen reader support ${!screenReaderEnabled ? "on" : "off"}`); }} quietMode={quietMode} onQuietModeToggle={() => { setQuietMode(!quietMode); announce(`Quiet motion ${!quietMode ? "on" : "off"}`); }} onManageIntegrations={() => setDialog("integrations")} />
+            <ProfileCard profile={user ? { ...snapshot.profile, name: accountName, initials: accountInitials, integrations: [] } : { ...snapshot.profile, name: "Guest preview", initials: "BM", integrations: [] }} accountEmail={user?.email ?? undefined} signedIn={Boolean(user)} onLogout={() => { void logout().then(() => { window.location.href = "/"; }).catch(() => announce("Sign out failed because the session service is unavailable.")); }} open={profileOpen} onToggle={() => setProfileOpen(!profileOpen)} screenReaderEnabled={screenReaderEnabled} onScreenReaderToggle={toggleScreenReader} quietMode={quietMode} onQuietModeToggle={toggleQuietMode} onManageIntegrations={() => setDialog("settings")} />
           </div>
         </header>
 
@@ -207,13 +265,13 @@ export default function Home() {
             </section>
           </div>
 
-          <HealthcareWorkspace />
+          <HealthcareWorkspace key={user?.openId ?? "anonymous"} userId={user?.openId ?? null} />
 
           <footer className="content-footer"><div className="footer-status"><span className="system-dot" /> Your data stays yours <span className="footer-divider" /> {syncStatus === "synced" ? "MongoDB sync" : "Local preview"} <span className="footer-divider" /> <button onClick={() => setDialog("privacy")}>Privacy</button></div><div className="footer-links"><span>Made for better days</span><span className="footer-mark">✳</span></div></footer>
         </div>
       </main>
       <div className="sr-only" aria-live="polite">{announcement}</div>
-      <DashboardActionDialog action={dialog} snapshot={snapshot} boundary={boundary} quietMode={quietMode} screenReaderEnabled={screenReaderEnabled} onOpenChange={(open) => setDialog(open ? dialog : null)} onNavigate={navigateTo} onQuickAction={handleQuickAction} onQuietModeToggle={() => { setQuietMode((value) => !value); announce(`Quiet motion ${!quietMode ? "on" : "off"}`); }} onScreenReaderToggle={() => { setScreenReaderEnabled((value) => !value); announce(`Screen reader support ${!screenReaderEnabled ? "on" : "off"}`); }} onMarkRead={() => { setHasUnreadNotifications(false); announce("Notifications marked as read"); }} />
+      <DashboardActionDialog action={dialog} snapshot={snapshot} boundary={boundary} quietMode={quietMode} screenReaderEnabled={screenReaderEnabled} onOpenChange={(open) => setDialog(open ? dialog : null)} onNavigate={navigateTo} onQuickAction={handleQuickAction} onQuietModeToggle={toggleQuietMode} onScreenReaderToggle={toggleScreenReader} onMarkRead={() => { setHasUnreadNotifications(false); announce("Notifications marked as read"); }} />
     </div>
   );
 }

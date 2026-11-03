@@ -14,11 +14,14 @@ async function getDatabase() {
     client ??= new MongoClient(uri, { serverSelectionTimeoutMS: 2500 });
     await client.connect();
     database = client.db(databaseName);
+    await database.collection<LocalSession>("authSessions").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+    await database.collection<LocalAccount>("localAccounts").createIndex({ openId: 1 }, { unique: true });
   }
   return database;
 }
 
 export type LocalAccount = { _id: string; openId: string; name: string; salt: string; passwordHash: string; createdAt: Date };
+export type LocalSession = { _id: string; openId: string; expiresAt: Date };
 
 export async function getLocalAccount(email: string): Promise<LocalAccount | null> {
   const db = await getDatabase();
@@ -30,12 +33,49 @@ export async function createLocalAccount(account: LocalAccount): Promise<void> {
   await db.collection<LocalAccount>("localAccounts").insertOne(account);
 }
 
+export async function createLocalSession(session: LocalSession): Promise<void> {
+  const db = await getDatabase();
+  await db.collection<LocalSession>("authSessions").insertOne(session);
+}
+
+export async function getLocalSessionByTokenHash(tokenHash: string): Promise<LocalSession | null> {
+  const db = await getDatabase();
+  return db.collection<LocalSession>("authSessions").findOne({ _id: tokenHash, expiresAt: { $gt: new Date() } });
+}
+
+export async function deleteLocalSession(tokenHash: string): Promise<void> {
+  const db = await getDatabase();
+  await db.collection<LocalSession>("authSessions").deleteOne({ _id: tokenHash });
+}
+
+export async function getLocalAccountByOpenId(openId: string): Promise<LocalAccount | null> {
+  const db = await getDatabase();
+  return db.collection<LocalAccount>("localAccounts").findOne({ openId });
+}
+
 function isSnapshot(value: unknown): value is DashboardSnapshot {
   if (!value || typeof value !== "object") return false;
   const data = value as Partial<DashboardSnapshot>;
+  const profile = data.profile;
+  const summary = data.summary;
   return Boolean(
-    data.profile && Array.isArray(data.metrics) && Array.isArray(data.activities) &&
-    data.summary && typeof data.summary.impactScore === "number",
+    profile && typeof profile.name === "string" && profile.name.length <= 120 &&
+    typeof profile.screenReaderEnabled === "boolean" &&
+    (profile.quietMode === undefined || typeof profile.quietMode === "boolean") &&
+    Array.isArray(data.metrics) && data.metrics.length <= 20 && data.metrics.every(metric =>
+      metric && typeof metric.key === "string" && typeof metric.label === "string" && metric.label.length <= 120 &&
+      typeof metric.value === "string" && metric.value.length <= 120 && Number.isFinite(metric.progress) && metric.progress >= 0 && metric.progress <= 100) &&
+    Array.isArray(data.activities) && data.activities.length <= 100 && data.activities.every(activity =>
+      activity && typeof activity.id === "string" && activity.id.length <= 100 && typeof activity.title === "string" && activity.title.length <= 200 &&
+      typeof activity.detail === "string" && activity.detail.length <= 1000 && Number.isFinite(activity.impact) && activity.impact >= 0 && activity.impact <= 10000 &&
+      typeof activity.completed === "boolean") &&
+    summary && Number.isFinite(summary.impactScore) && summary.impactScore >= 0 && summary.impactScore <= 1_000_000 &&
+    typeof summary.impactDelta === "string" && summary.impactDelta.length <= 40 &&
+    typeof summary.deepWork === "string" && summary.deepWork.length <= 40 &&
+    typeof summary.deepWorkDelta === "string" && summary.deepWorkDelta.length <= 40 &&
+    typeof summary.carbonSaved === "string" && summary.carbonSaved.length <= 40 &&
+    typeof summary.carbonDelta === "string" && summary.carbonDelta.length <= 40 &&
+    Number.isInteger(summary.streak) && summary.streak >= 0 && summary.streak <= 100_000,
   );
 }
 
@@ -103,4 +143,10 @@ export async function updateHealthcareRecord(userId: string, id: string, dataset
     { _id: id, userId, dataset }, { $set: { values, recordedAt: new Date().toISOString() } },
   );
   return result.matchedCount === 1;
+}
+
+export async function deleteHealthcareRecord(userId: string, id: string): Promise<boolean> {
+  const db = await getDatabase();
+  const result = await db.collection<StoredHealthcareRecord>("healthcareRecords").deleteOne({ _id: id, userId });
+  return result.deletedCount === 1;
 }

@@ -19,4 +19,11 @@ describe("healthcare record input validation", () => {
     expect(validateHealthcareValues("waste", { totalKg: 10, disposedKg: 12 })).toBe(false);
     expect(validateHealthcareValues("procurement", { product: "x".repeat(121) })).toBe(false);
   });
+
+  it("validates dated timetable tasks and task state", () => {
+    expect(validateHealthcareValues("timetable", { task: "Staff break", scheduledAt: "2026-11-03", durationMinutes: 30, completed: false })).toBe(true);
+    expect(validateHealthcareValues("timetable", { task: "", scheduledAt: "2026-11-03" })).toBe(false);
+    expect(validateHealthcareValues("timetable", { task: "Staff break", scheduledAt: "2026-02-30" })).toBe(false);
+    expect(validateHealthcareValues("timetable", { task: "Staff break", scheduledAt: "2026-11-03", completed: "yes" })).toBe(false);
+  });
 });

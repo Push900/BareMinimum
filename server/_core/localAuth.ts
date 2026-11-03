@@ -1,16 +1,15 @@
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import type { User } from "../../drizzle/schema";
-import { createLocalAccount, getLocalAccount } from "../mongo";
+import { createLocalAccount, createLocalSession as persistSession, deleteLocalSession, getLocalAccount, getLocalAccountByOpenId, getLocalSessionByTokenHash } from "../mongo";
 
 const SESSION_LIFETIME_MS = 24 * 60 * 60 * 1000;
-const sessions = new Map<string, { user: User; expiresAt: number }>();
+const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
 
 function passwordHash(password: string, salt: string) {
   return scryptSync(password, salt, 64).toString("hex");
 }
 
 export async function registerLocalAccount(emailInput: unknown, nameInput: unknown, passwordInput: unknown) {
-  if (process.env.NODE_ENV !== "development") throw new Error("Local accounts are only available in development");
   const email = typeof emailInput === "string" ? emailInput.trim().toLowerCase() : "";
   const name = typeof nameInput === "string" ? nameInput.trim().slice(0, 80) : "";
   const password = typeof passwordInput === "string" ? passwordInput : "";
@@ -26,7 +25,6 @@ export async function registerLocalAccount(emailInput: unknown, nameInput: unkno
 }
 
 export async function loginLocalAccount(emailInput: unknown, passwordInput: unknown) {
-  if (process.env.NODE_ENV !== "development") throw new Error("Local accounts are only available in development");
   const email = typeof emailInput === "string" ? emailInput.trim().toLowerCase() : "";
   const password = typeof passwordInput === "string" ? passwordInput : "";
   const account = await getLocalAccount(email);
@@ -36,20 +34,22 @@ export async function loginLocalAccount(emailInput: unknown, passwordInput: unkn
   return createSession(account.openId, account.name, email);
 }
 
-function createSession(openId: string, name: string, email: string) {
+async function createSession(openId: string, name: string, email: string) {
   const token = randomBytes(32).toString("base64url");
   const now = new Date();
   const user: User = { id: -Math.floor(Math.random() * 1_000_000) - 1, openId, name, email, loginMethod: "local-development", role: "user", createdAt: now, updatedAt: now, lastSignedIn: now };
-  sessions.set(token, { user, expiresAt: Date.now() + SESSION_LIFETIME_MS });
+  await persistSession({ _id: hashToken(token), openId, expiresAt: new Date(Date.now() + SESSION_LIFETIME_MS) });
   return { token, user, maxAge: SESSION_LIFETIME_MS };
 }
 
-export function getLocalSession(token?: string): User | null {
+export async function getLocalSession(token?: string): Promise<User | null> {
   if (!token) return null;
-  const session = sessions.get(token);
+  const session = await getLocalSessionByTokenHash(hashToken(token));
   if (!session) return null;
-  if (session.expiresAt <= Date.now()) { sessions.delete(token); return null; }
-  return session.user;
+  const account = await getLocalAccountByOpenId(session.openId);
+  if (!account) return null;
+  const now = new Date();
+  return { id: -1, openId: account.openId, email: account._id, name: account.name, loginMethod: "local-development", role: "user", createdAt: account.createdAt, updatedAt: account.createdAt, lastSignedIn: now };
 }
 
-export function clearLocalSession(token?: string) { if (token) sessions.delete(token); }
+export async function clearLocalSession(token?: string) { if (token) await deleteLocalSession(hashToken(token)); }

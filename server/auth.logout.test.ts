@@ -18,7 +18,7 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
     openId: "sample-user",
     email: "sample@example.com",
     name: "Sample User",
-    loginMethod: "manus",
+    loginMethod: "local-development",
     role: "user",
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -29,6 +29,7 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
     user,
     req: {
       protocol: "https",
+      secure: true,
       headers: {},
     } as TrpcContext["req"],
     res: {
@@ -54,7 +55,7 @@ describe("auth.logout", () => {
     expect(clearedCookies[0]?.options).toMatchObject({
       maxAge: -1,
       secure: true,
-      sameSite: "none",
+      sameSite: "lax",
       httpOnly: true,
       path: "/",
     });

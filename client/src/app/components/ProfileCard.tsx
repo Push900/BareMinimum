@@ -1,16 +1,10 @@
 import { useEffect, useRef } from "react";
 import {
   Accessibility,
-  CalendarDays,
-  Check,
   ChevronDown,
-  Github,
-  Link2,
   Moon,
-  Radio,
   Sparkles,
   SunMedium,
-  Unplug,
   Volume2,
 } from "lucide-react";
 import type { BareMinimumProfile } from "../models/dashboard";
@@ -25,13 +19,10 @@ interface ProfileCardProps {
   quietMode: boolean;
   onQuietModeToggle: () => void;
   onManageIntegrations: () => void;
+  accountEmail?: string;
+  signedIn: boolean;
+  onLogout: () => void;
 }
-
-const integrationIcon = (id: string) => {
-  if (id === "calendar") return <CalendarDays size={14} />;
-  if (id === "github") return <Github size={14} />;
-  return <Radio size={14} />;
-};
 
 export function ProfileCard({
   profile,
@@ -42,6 +33,9 @@ export function ProfileCard({
   quietMode,
   onQuietModeToggle,
   onManageIntegrations,
+  accountEmail,
+  signedIn,
+  onLogout,
 }: ProfileCardProps) {
   const { theme, toggleTheme } = useTheme();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -98,7 +92,7 @@ export function ProfileCard({
         <span className="avatar avatar--small">{profile.initials}</span>
         <span className="profile-trigger__copy">
           <strong>{profile.name}</strong>
-          <span><i className="status-dot" /> {profile.tier} member</span>
+          <span><i className="status-dot" /> {signedIn ? "Signed in" : "Local preview"}</span>
         </span>
         <ChevronDown size={16} className={`profile-trigger__chevron ${open ? "rotate" : ""}`} aria-hidden="true" />
       </button>
@@ -106,27 +100,19 @@ export function ProfileCard({
       <div id="profile-details" className="profile-panel" hidden={!open}>
         <div className="profile-panel__header">
           <div>
-            <p className="eyebrow">YOUR SIGNAL</p>
-            <h2>Make space for what matters.</h2>
-          </div>
-          <div className="alignment-badge" aria-label={`${profile.alignmentScore}% SDG alignment`}>
-            <span>{profile.alignmentScore}%</span>
-            <small>aligned</small>
+            <p className="eyebrow">YOUR ACCOUNT</p>
+            <h2>{signedIn ? profile.name : "Guest preview"}</h2>
           </div>
         </div>
-        <p className="profile-bio">{profile.bio}</p>
-        <div className="profile-focus"><Sparkles size={14} /> Focus: <strong>{profile.focusArea}</strong></div>
+        <p className="profile-bio">{signedIn ? accountEmail : "Sign in to sync records privately across sessions."}</p>
+        <div className="profile-focus"><Sparkles size={14} /> {signedIn ? "Account data" : "Local preview"}: <strong>{signedIn ? "Private" : "Sample"}</strong></div>
 
         <div className="profile-section">
-          <div className="profile-section__label"><span>Connected spaces</span><button className="link-button" onClick={onManageIntegrations}><Link2 size={13} /> Manage</button></div>
+          <div className="profile-section__label"><span>Account</span><span className="profile-section__meta">{signedIn ? "Signed in" : "Not signed in"}</span></div>
           <div className="integration-list">
-            {profile.integrations.map((integration) => (
-              <div className="integration-row" key={integration.id}>
-                <span className={`integration-icon integration-icon--${integration.tone}`}>{integrationIcon(integration.id)}</span>
-                <span>{integration.label}</span>
-                {integration.status === "connected" ? <Check size={14} className="success-icon" /> : <Unplug size={14} className="muted-icon" />}
-              </div>
-            ))}
+            <button className="integration-row" onClick={() => { window.location.href = "/dashboard"; }}><span>Dashboard</span></button>
+            <button className="integration-row" onClick={onManageIntegrations}><span>Settings</span></button>
+            {signedIn ? <button className="integration-row" onClick={onLogout}><span>Log out</span></button> : <><a className="integration-row" href="/login"><span>Sign in</span></a><a className="integration-row" href="/signup"><span>Create account</span></a></>}
           </div>
         </div>
 

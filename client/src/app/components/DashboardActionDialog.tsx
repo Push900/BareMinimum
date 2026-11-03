@@ -71,7 +71,7 @@ export function DashboardActionDialog({ action, snapshot, boundary, quietMode, s
           {action === "settings" && <div className="action-dialog__settings">
             <button aria-pressed={quietMode} onClick={onQuietModeToggle}><span><strong>Quiet motion</strong><small>Reduce movement across the dashboard</small></span><i className={quietMode ? "is-on" : ""} /></button>
             <button aria-pressed={screenReaderEnabled} onClick={onScreenReaderToggle}><span><strong>Screen reader support</strong><small>Announce dashboard updates as they happen</small></span><i className={screenReaderEnabled ? "is-on" : ""} /></button>
-            <p className="action-dialog__hint">Preferences are kept in this browser session. Your data sync status appears in the top bar.</p>
+            <p className="action-dialog__hint">Preferences sync to your account when signed in; otherwise they stay in this browser.</p>
           </div>}
           {action === "notifications" && <div className="action-dialog__feed"><p><span className="action-dot action-dot--mint" /> Your dashboard is ready for today <small>Just now</small></p><p><span className="action-dot action-dot--blue" /> Your focus boundary is set to {boundary} hours <small>Today</small></p><p><span className="action-dot action-dot--gold" /> {snapshot.activities.filter((item) => !item.completed).length} suggested actions are waiting <small>Today</small></p><button className="action-dialog__text-button" onClick={() => { onMarkRead(); close(); }}>Mark all as read</button></div>}
           {action === "signal" && <>

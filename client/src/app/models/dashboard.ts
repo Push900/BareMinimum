@@ -41,6 +41,7 @@ export interface BareMinimumProfile {
   tier: "Free" | "Pro" | "Enterprise";
   alignmentScore: number;
   screenReaderEnabled: boolean;
+  quietMode?: boolean;
   integrations: Integration[];
 }
 
@@ -70,6 +71,7 @@ export const dashboardSnapshot: DashboardSnapshot = {
     tier: "Pro",
     alignmentScore: 88,
     screenReaderEnabled: true,
+    quietMode: false,
     integrations: [
       { id: "calendar", provider: "GC", label: "Google Calendar", status: "connected", tone: "violet" },
       { id: "github", provider: "GH", label: "GitHub", status: "connected", tone: "ink" },
